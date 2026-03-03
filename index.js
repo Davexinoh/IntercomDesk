@@ -7,21 +7,32 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 app.use(express.static(__dirname))
 
-// API endpoint
-app.get("/api/categories", (req, res) => {
+// API routes
+app.get("/api/categories", (req,res)=>{
   res.json([
-    "Billing Issue",
-    "Technical Support",
-    "Account Access",
-    "Bug Report"
+    { id:"payment", name:"Payment Issues"},
+    { id:"login", name:"Login Problems"},
+    { id:"bug", name:"Bug Report"},
+    { id:"other", name:"Other"}
   ])
 })
 
-// serve UI
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"))
+app.get("/api/categories/:id",(req,res)=>{
+  const issues = {
+    payment:["failed_transaction","double_charge","refund"],
+    login:["cannot_login","reset_password","account_locked"],
+    bug:["ui_bug","feature_not_working","crash"],
+    other:["general_question"]
+  }
+
+  res.json(issues[req.params.id] || [])
 })
 
-app.listen(PORT, () => {
-  console.log("IntercomDesk running on port " + PORT)
+// Serve frontend
+app.get("/",(req,res)=>{
+  res.sendFile(path.join(__dirname,"index.html"))
+})
+
+app.listen(PORT,()=>{
+  console.log("Server running on",PORT)
 })

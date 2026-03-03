@@ -1,22 +1,22 @@
 Intercom Desk
 - A structured complaint intake interface built for the Intercom / Trac ecosystem.
-Intercom Desk replaces unstructured support messages with a guided complaint flow where users select a category, choose a specific issue, and submit a structured report.
-🌟 Overview
-Intercom Desk introduces a guided support workflow that improves clarity between users and support agents.
+-Intercom Desk replaces unstructured support messages with a guided complaint flow where users select a category, choose a specific issue, and submit a structured report.
+-🌟 Overview
+-Intercom Desk introduces a guided support workflow that improves clarity between users and support agents.
 Instead of free-form messaging, users:
 Select a complaint category
 Choose a specific sub-issue
 Provide a structured description
 Submit the complaint for processing
 This structured flow enables faster triage and clearer issue tracking.
-✨ Features
+-✨ Features
 Structured complaint categories
 Sub-issue selection
 Validated complaint submission
 Simple API integration
 Lightweight web interface
 Easily extendable architecture
-🌐 Live Demo
+-🌐 Live Demo
 Frontend / Application:
 https://intercom-desk.onrender.com⁠�
 API example:/api/categories

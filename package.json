@@ -7,6 +7,9 @@
     "name": "contract-test-latest",
     "type": "terminal"
   },
+  "scripts": {
+    "start": "serve -l 5000 ."
+  },
   "dependencies": {
     "b4a": "^1.6.7",
     "bare-ws": "2.0.3",
@@ -22,5 +25,8 @@
   },
   "overrides": {
     "trac-wallet": "1.0.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
   }
 }

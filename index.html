@@ -85,7 +85,7 @@ Structured complaint intake interface for the Intercom / Trac ecosystem.
 
 <label>Complaint Category</label>
 
-<select id="category">
+<select id="category" onchange="loadSubIssues(this.value)">
 <option>Loading categories...</option>
 </select>
 
@@ -118,13 +118,39 @@ async function loadCategories(){
 
     data.forEach(c=>{
       const option=document.createElement("option")
-      option.value=c
-      option.textContent=c
+      option.value=c.id
+      option.textContent=c.name
+      select.appendChild(option)
+    })
+
+    if(data.length > 0){
+      loadSubIssues(data[0].id)
+    }
+
+  }catch(err){
+    document.getElementById("category").innerHTML="<option>Error loading categories</option>"
+  }
+
+}
+
+async function loadSubIssues(categoryId){
+
+  try{
+    const res = await fetch("/api/categories/" + categoryId)
+    const data = await res.json()
+
+    const select = document.getElementById("subIssue")
+    select.innerHTML=""
+
+    data.forEach(s=>{
+      const option=document.createElement("option")
+      option.value=s
+      option.textContent=s.replace(/_/g," ")
       select.appendChild(option)
     })
 
   }catch(err){
-    document.getElementById("category").innerHTML="<option>Error loading categories</option>"
+    document.getElementById("subIssue").innerHTML="<option>Error loading sub-issues</option>"
   }
 
 }

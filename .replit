@@ -1,4 +1,4 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "web"]
 
 [workflows]
 runButton = "Project"
@@ -37,3 +37,4 @@ publicDir = "."
 
 [nix]
 packages = ["p7zip"]
+channel = "stable-25_05"

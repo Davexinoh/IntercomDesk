@@ -1,117 +1,261 @@
-const API="https://intercomdesk-v2.onrender.com"
+const API = "https://intercomdesk-v2.onrender.com"
 
-window.onload=async()=>{
+let stage = "start"
+let selectedCategory = null
+let selectedIssue = null
 
-const res=await fetch(API+"/api/categories")
-const categories=await res.json()
+const chat = document.getElementById("chat")
 
-const categorySelect=document.getElementById("category")
+function addBubble(text, type) {
 
-categories.forEach(c=>{
+const msg = document.createElement("div")
+msg.className = "bubble " + type
+msg.innerText = text
 
-const opt=document.createElement("option")
-opt.value=c.id
-opt.textContent=c.name
-
-categorySelect.appendChild(opt)
-
-})
-
-loadSubIssues(categorySelect.value)
+chat.appendChild(msg)
+chat.scrollTop = chat.scrollHeight
 
 }
 
-async function loadSubIssues(category){
+function bot(text) {
+addBubble(text, "bot")
+}
 
-const res=await fetch(API+"/api/categories/"+category)
-const issues=await res.json()
+function user(text) {
+addBubble(text, "user")
+}
 
-const sub=document.getElementById("subIssue")
+function typing() {
 
-sub.innerHTML=""
+const t = document.createElement("div")
+t.className = "typing"
+t.innerText = "Bot is typing..."
 
-issues.forEach(i=>{
+chat.appendChild(t)
+chat.scrollTop = chat.scrollHeight
 
-const opt=document.createElement("option")
-opt.value=i
-opt.textContent=i
-
-sub.appendChild(opt)
-
-})
+setTimeout(() => t.remove(), 800)
 
 }
 
-document.getElementById("category").addEventListener("change",(e)=>{
+window.onload = async () => {
 
-loadSubIssues(e.target.value)
+typing()
 
+setTimeout(async () => {
+
+bot("Hello 👋")
+bot("Welcome to IntercomDesk")
+
+bot("What issue are you having?")
+
+const res = await fetch(API + "/api/categories")
+window.categories = await res.json()
+
+categories.forEach(c => {
+bot("• " + c.name)
 })
 
-async function submitComplaint(){
+bot("You can also type: check <ticketID>")
 
-const btn=document.getElementById("submitBtn")
+stage = "category"
 
-btn.innerText="Submitting..."
+}, 900)
 
-const category=document.getElementById("category").value
-const subIssue=document.getElementById("subIssue").value
-const description=document.getElementById("description").value
+}
 
-const res=await fetch(API+"/api/complaints",{
+async function send() {
 
-method:"POST",
+const input = document.getElementById("input")
 
-headers:{
-"Content-Type":"application/json"
-},
+const text = input.value.trim()
 
-body:JSON.stringify({
-category,
-subIssue,
-description
-})
+if (!text) return
 
-})
+user(text)
 
-const data=await res.json()
+input.value = ""
 
-btn.innerText="Submit Complaint"
+if (text.startsWith("check ")) {
 
-document.getElementById("result").innerHTML=
-`
+const id = text.split(" ")[1]
 
-<div class="success">
-Complaint submitted<br>
-Reference ID: <b>${data.reference}</b>
-</div>
-`}
+typing()
 
-async function checkStatus(){
+setTimeout(async () => {
 
-const id=document.getElementById("ticketId").value
+const res = await fetch(API + "/api/complaints/" + id)
 
-const res=await fetch(API+"/api/complaints/"+id)
+const data = await res.json()
 
-const data=await res.json()
+if (data.error) {
 
-if(data.error){
+bot("Ticket not found")
+return
 
-document.getElementById("statusResult").innerHTML="Ticket not found"
+}
+
+const time = new Date(data.createdAt).toLocaleString()
+
+bot("Status: " + data.status)
+bot("Created: " + time)
+bot("Category: " + data.category)
+bot("Issue: " + data.subIssue)
+
+}, 900)
 
 return
 
 }
 
-const time=new Date(data.createdAt).toLocaleString()
+if (stage === "category") {
 
-document.getElementById("statusResult").innerHTML=
-`
+const match = categories.find(c =>
+c.name.toLowerCase().includes(text.toLowerCase())
+)
 
-<div class="statusCard">
-<b>Status:</b> ${data.status}<br>
-<b>Created:</b> ${time}<br>
-<b>Category:</b> ${data.category}<br>
-<b>Issue:</b> ${data.subIssue}
-</div>
-`}
+if (!match) {
+
+bot("Please type one of the categories listed.")
+return
+
+}
+
+selectedCategory = match.id
+
+typing()
+
+setTimeout(async () => {
+
+bot("Fetching issue types...")
+
+const res = await fetch(API + "/api/categories/" + selectedCategory)
+
+window.issues = await res.json()
+
+issues.forEach(i => {
+bot("• " + i)
+})
+
+bot("Select issue type")
+
+stage = "issue"
+
+}, 800)
+
+return
+
+}
+
+if (stage === "issue") {
+
+selectedIssue = text
+
+bot("Please describe the problem")
+
+stage = "description"
+
+return
+
+}
+
+if (stage === "description") {
+
+typing()
+
+setTimeout(async () => {
+
+bot("Submitting complaint...")
+
+const res = await fetch(API + "/api/complaints", {
+
+method: "POST",
+
+headers: {
+"Content-Type": "application/json"
+},
+
+body: JSON.stringify({
+category: selectedCategory,
+subIssue: selectedIssue,
+description: text
+})
+
+})
+
+const data = await res.json()
+
+bot("✅ Ticket created")
+bot("Reference ID: " + data.reference)
+
+bot("You can track it using:")
+bot("check " + data.reference)
+
+stage = "done"
+
+}, 900)
+
+}
+
+}
+
+function showAdmin() {
+
+document.getElementById("chat").style.display = "none"
+document.getElementById("inputArea").style.display = "none"
+
+const admin = document.getElementById("admin")
+
+admin.style.display = "flex"
+
+loadTickets()
+
+}
+
+function showChat() {
+
+document.getElementById("chat").style.display = "flex"
+document.getElementById("inputArea").style.display = "flex"
+
+document.getElementById("admin").style.display = "none"
+
+}
+
+async function loadTickets() {
+
+const admin = document.getElementById("admin")
+
+admin.innerHTML = "Loading tickets..."
+
+try {
+
+const res = await fetch(API + "/api/admin")
+
+const tickets = await res.json()
+
+admin.innerHTML = ""
+
+tickets.forEach(t => {
+
+const el = document.createElement("div")
+
+el.className = "ticket"
+
+el.innerHTML =
+"<b>" + t.id + "</b><br>" +
+t.category + " / " + t.subIssue + "<br>" +
+"Status: " + t.status
+
+admin.appendChild(el)
+
+})
+
+}
+
+catch {
+
+admin.innerHTML = "Admin API not available"
+
+}
+
+  }

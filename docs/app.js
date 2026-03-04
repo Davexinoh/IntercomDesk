@@ -83,3 +83,28 @@ document.getElementById("result").innerText =
 
 loadCategories();
 
+
+async function submitComplaint(){
+
+const category=document.getElementById("category").value
+const subIssue=document.getElementById("subIssue").value
+const description=document.getElementById("description").value
+
+const res = await fetch(API + "/api/complaints",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+category,
+subIssue,
+description
+})
+})
+
+const data=await res.json()
+
+document.getElementById("result").innerHTML =
+"✅ Complaint submitted<br>Reference ID: <b>"+data.reference+"</b>"
+
+}

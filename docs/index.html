@@ -1,12 +1,11 @@
 <!DOCTYPE html><html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Intercom Desk</title><style>
+<head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Intercom Desk</title><style>
 
 body{
 margin:0;
 font-family:Inter,system-ui;
-background:linear-gradient(135deg,#0f172a,#020617);
+background:linear-gradient(135deg,#020617,#0f172a);
 color:white;
 display:flex;
 justify-content:center;
@@ -16,30 +15,31 @@ min-height:100vh;
 
 .wrapper{
 width:100%;
-max-width:420px;
+max-width:440px;
 padding:20px;
 }
 
 .card{
 background:#111827;
-border-radius:16px;
 padding:28px;
-box-shadow:0 20px 60px rgba(0,0,0,.6);
+border-radius:16px;
+box-shadow:0 30px 80px rgba(0,0,0,.6);
 }
 
 h1{
-margin-top:0;
+margin:0 0 20px 0;
 font-size:22px;
 }
 
 label{
 font-size:13px;
 opacity:.8;
-margin-top:10px;
 display:block;
+margin-top:12px;
 }
 
 select,textarea,input{
+
 width:100%;
 margin-top:6px;
 padding:12px;
@@ -47,14 +47,17 @@ border-radius:8px;
 border:none;
 background:#1f2937;
 color:white;
+font-size:14px;
+
 }
 
 textarea{
-min-height:70px;
+min-height:80px;
 resize:none;
 }
 
 button{
+
 width:100%;
 margin-top:14px;
 padding:12px;
@@ -64,6 +67,8 @@ background:#6366f1;
 color:white;
 font-weight:bold;
 cursor:pointer;
+transition:.2s;
+
 }
 
 button:hover{
@@ -72,8 +77,21 @@ background:#4f46e5;
 
 .result{
 margin-top:14px;
-color:#22c55e;
 font-size:14px;
+}
+
+.success{
+background:#064e3b;
+padding:12px;
+border-radius:8px;
+margin-top:12px;
+}
+
+.statusCard{
+background:#1f2937;
+padding:12px;
+border-radius:8px;
+margin-top:10px;
 }
 
 hr{
@@ -90,12 +108,11 @@ border-top:1px solid #2a2a2a;
 
 <label>Description</label>
 
-<textarea id="description"></textarea><button onclick="submitComplaint()">Submit Complaint</button>
+<textarea id="description" placeholder="Describe your issue"></textarea><button id="submitBtn" onclick="submitComplaint()">Submit Complaint</button>
 
 <div id="result" class="result"></div><hr><label>Check Complaint Status</label>
-<input id="ticketId" placeholder="Enter reference ID">
 
-<button onclick="checkStatus()">Check Status</button>
+<input id="ticketId" placeholder="Enter reference ID"><button onclick="checkStatus()">Check Status</button>
 
-<div id="statusResult" class="result"></div></div></div><script src="app.js"></script></body>
-  </html>
+<div id="statusResult"></div></div></div><script src="app.js"></script></body>
+</html>

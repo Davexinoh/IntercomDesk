@@ -1,118 +1,406 @@
-<!DOCTYPE html><html>
-<head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Intercom Desk</title><style>
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>IntercomDesk</title><style>
+
+*{box-sizing:border-box}
 
 body{
 margin:0;
 font-family:Inter,system-ui;
-background:linear-gradient(135deg,#020617,#0f172a);
-color:white;
+
+background:
+radial-gradient(circle at 20% 20%,#6366f155,transparent),
+radial-gradient(circle at 80% 80%,#22c55e33,transparent),
+#020617;
+
+height:100vh;
+
 display:flex;
 justify-content:center;
 align-items:center;
-min-height:100vh;
+
+color:white;
 }
 
-.wrapper{
+.app{
+
 width:100%;
 max-width:440px;
-padding:20px;
+height:720px;
+
+background:rgba(17,24,39,.9);
+
+border-radius:24px;
+
+display:flex;
+flex-direction:column;
+
+overflow:hidden;
+
+box-shadow:0 40px 120px rgba(0,0,0,.8);
+
+border:1px solid rgba(255,255,255,.06);
 }
 
-.card{
-background:#111827;
-padding:28px;
-border-radius:16px;
-box-shadow:0 30px 80px rgba(0,0,0,.6);
+.header{
+
+background:linear-gradient(90deg,#6366f1,#22c55e);
+
+padding:18px;
+
+font-weight:600;
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
 }
 
-h1{
-margin:0 0 20px 0;
-font-size:22px;
-}
+.tabs button{
 
-label{
-font-size:13px;
-opacity:.8;
-display:block;
-margin-top:12px;
-}
-
-select,textarea,input{
-
-width:100%;
-margin-top:6px;
-padding:12px;
-border-radius:8px;
+background:transparent;
 border:none;
+color:white;
+cursor:pointer;
+font-size:12px;
+margin-left:10px;
+}
+
+.chat{
+
+flex:1;
+padding:18px;
+overflow-y:auto;
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+.bubble{
+
+max-width:75%;
+padding:12px 14px;
+border-radius:16px;
+font-size:14px;
+animation:pop .2s ease;
+}
+
+.bot{background:#1f2937}
+.user{background:#6366f1;align-self:flex-end}
+
+.typing{
+font-size:12px;
+opacity:.6;
+}
+
+.input{
+
+display:flex;
+gap:8px;
+padding:14px;
+background:#020617;
+}
+
+input{
+
+flex:1;
+padding:12px;
+border:none;
+border-radius:12px;
 background:#1f2937;
 color:white;
-font-size:14px;
 
-}
-
-textarea{
-min-height:80px;
-resize:none;
 }
 
 button{
 
-width:100%;
-margin-top:14px;
-padding:12px;
+padding:12px 16px;
 border:none;
-border-radius:8px;
+border-radius:12px;
 background:#6366f1;
 color:white;
-font-weight:bold;
 cursor:pointer;
-transition:.2s;
+font-weight:600;
 
 }
 
-button:hover{
-background:#4f46e5;
+button:hover{background:#4f46e5}
+
+.admin{
+
+display:none;
+flex-direction:column;
+padding:20px;
+overflow:auto;
+gap:10px;
 }
 
-.result{
-margin-top:14px;
-font-size:14px;
-}
+.ticket{
 
-.success{
-background:#064e3b;
-padding:12px;
-border-radius:8px;
-margin-top:12px;
-}
-
-.statusCard{
 background:#1f2937;
 padding:12px;
-border-radius:8px;
-margin-top:10px;
+border-radius:10px;
+font-size:13px;
+
 }
 
-hr{
-margin:24px 0;
-border:0;
-border-top:1px solid #2a2a2a;
+@keyframes pop{
+
+from{
+transform:scale(.8);
+opacity:0;
 }
 
-</style></head><body><div class="wrapper"><div class="card"><h1>Intercom Desk</h1><label>Category</label>
-<select id="category"></select>
+to{
+transform:scale(1);
+opacity:1;
+}
 
-<label>Sub Issue</label>
-<select id="subIssue"></select>
+}
 
-<label>Description</label>
+</style></head><body><div class="app"><div class="header">IntercomDesk
 
-<textarea id="description" placeholder="Describe your issue"></textarea><button id="submitBtn" onclick="submitComplaint()">Submit Complaint</button>
+<div class="tabs"><button onclick="showChat()">Chat</button>
 
-<div id="result" class="result"></div><hr><label>Check Complaint Status</label>
+<button onclick="showAdmin()">Admin</button>
 
-<input id="ticketId" placeholder="Enter reference ID"><button onclick="checkStatus()">Check Status</button>
+</div></div><div id="chat" class="chat"></div><div id="inputArea" class="input"><input id="input" placeholder="Type a message"><button onclick="send()">Send</button>
 
-<div id="statusResult"></div></div></div><script src="app.js"></script></body>
-</html>
+</div><div id="admin" class="admin"></div></div><script>
+
+const API="https://intercomdesk-v2.onrender.com"
+
+let stage="start"
+let selectedCategory=null
+let selectedIssue=null
+
+const chat=document.getElementById("chat")
+
+function bubble(text,type){
+
+const msg=document.createElement("div")
+msg.className="bubble "+type
+msg.innerText=text
+
+chat.appendChild(msg)
+chat.scrollTop=chat.scrollHeight
+
+}
+
+function bot(text){bubble(text,"bot")}
+function user(text){bubble(text,"user")}
+
+function typing(){
+
+const t=document.createElement("div")
+t.className="typing"
+t.innerText="Bot typing..."
+
+chat.appendChild(t)
+
+setTimeout(()=>t.remove(),800)
+
+}
+
+window.onload=async()=>{
+
+typing()
+
+setTimeout(async()=>{
+
+bot("Hello 👋")
+bot("What issue are you having?")
+
+const res=await fetch(API+"/api/categories")
+window.categories=await res.json()
+
+categories.forEach(c=>{
+bot("• "+c.name)
+})
+
+bot("You can also type: check <ticketID>")
+
+stage="category"
+
+},900)
+
+}
+
+async function send(){
+
+const input=document.getElementById("input")
+const text=input.value.trim()
+
+if(!text)return
+
+user(text)
+input.value=""
+
+if(text.startsWith("check ")){
+
+const id=text.split(" ")[1]
+
+typing()
+
+setTimeout(async()=>{
+
+const res=await fetch(API+"/api/complaints/"+id)
+const data=await res.json()
+
+if(data.error){
+bot("Ticket not found")
+return
+}
+
+const time=new Date(data.createdAt).toLocaleString()
+
+bot("Status: "+data.status)
+bot("Created: "+time)
+bot("Category: "+data.category)
+bot("Issue: "+data.subIssue)
+
+},800)
+
+return
+}
+
+if(stage==="category"){
+
+const match=categories.find(c=>c.name.toLowerCase().includes(text.toLowerCase()))
+
+if(!match){
+bot("Please type one of the categories listed.")
+return
+}
+
+selectedCategory=match.id
+
+typing()
+
+setTimeout(async()=>{
+
+bot("Fetching issue types...")
+
+const res=await fetch(API+"/api/categories/"+selectedCategory)
+window.issues=await res.json()
+
+issues.forEach(i=>{
+bot("• "+i)
+})
+
+bot("Select issue type")
+
+stage="issue"
+
+},800)
+
+return
+}
+
+if(stage==="issue"){
+
+selectedIssue=text
+bot("Please describe the problem")
+
+stage="description"
+return
+
+}
+
+if(stage==="description"){
+
+typing()
+
+setTimeout(async()=>{
+
+bot("Submitting complaint...")
+
+const res=await fetch(API+"/api/complaints",{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+
+category:selectedCategory,
+subIssue:selectedIssue,
+description:text
+
+})
+
+})
+
+const data=await res.json()
+
+bot("✅ Ticket created")
+bot("Reference ID: "+data.reference)
+
+bot("Use: check "+data.reference+" to track")
+
+stage="done"
+
+},900)
+
+}
+
+}
+
+function showAdmin(){
+
+document.getElementById("chat").style.display="none"
+document.getElementById("inputArea").style.display="none"
+
+const admin=document.getElementById("admin")
+
+admin.style.display="flex"
+
+loadTickets()
+
+}
+
+function showChat(){
+
+document.getElementById("chat").style.display="flex"
+document.getElementById("inputArea").style.display="flex"
+
+document.getElementById("admin").style.display="none"
+
+}
+
+async function loadTickets(){
+
+const admin=document.getElementById("admin")
+admin.innerHTML="Loading tickets..."
+
+try{
+
+const res=await fetch(API+"/api/admin")
+const tickets=await res.json()
+
+admin.innerHTML=""
+
+tickets.forEach(t=>{
+
+const el=document.createElement("div")
+el.className="ticket"
+
+el.innerHTML=
+
+"<b>"+t.id+"</b><br>"+
+t.category+" / "+t.subIssue+"<br>"+
+"Status: "+t.status
+
+admin.appendChild(el)
+
+})
+
+}catch{
+
+admin.innerHTML="Admin API not available"
+
+}
+
+}
+
+</script></body></html>

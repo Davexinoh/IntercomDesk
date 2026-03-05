@@ -2,53 +2,50 @@ const express = require("express")
 const cors = require("cors")
 
 const app = express()
+
 app.use(cors())
 app.use(express.json())
 
-const PORT = process.env.PORT || 10000
-
 let complaints = []
 
-function generateId(){
-return "ICD-" + Math.random().toString(16).slice(2,7).toUpperCase()
+function generateID(){
+return "ICD-" + Math.random().toString(36).substring(2,7).toUpperCase()
 }
 
 const categories = [
-{id:"payment",name:"Payment Issues"},
-{id:"login",name:"Login Problems"},
-{id:"bug",name:"Bug Report"},
-{id:"other",name:"Other"}
+{ id:"payment", name:"Payment Issues", issues:["failed_payment","refund_request","double_charge"] },
+{ id:"login", name:"Login Problems", issues:["reset_password","cannot_login"] },
+{ id:"bug", name:"Bug Report", issues:["ui_bug","system_error"] },
+{ id:"other", name:"Other", issues:["general"] }
 ]
 
-const subIssues = {
-payment:["failed_transaction","refund_request"],
-login:["reset_password","cannot_login"],
-bug:["ui_bug","system_error"],
-other:["general_question"]
-}
-
 app.get("/api/categories",(req,res)=>{
-res.json(categories)
+res.json(categories.map(c=>({id:c.id,name:c.name})))
 })
 
 app.get("/api/categories/:id",(req,res)=>{
-res.json(subIssues[req.params.id] || [])
+const cat = categories.find(c=>c.id===req.params.id)
+if(!cat) return res.json([])
+res.json(cat.issues)
 })
 
 app.post("/api/complaints",(req,res)=>{
 
-const id = generateId()
+const {category,subIssue,description} = req.body
 
-const complaint={
+const id = generateID()
+
+const ticket = {
 id,
-category:req.body.category,
-subIssue:req.body.subIssue,
-description:req.body.description,
+category,
+subIssue,
+description,
 status:"pending",
-createdAt:Date.now()
+reply:"",
+created:Date.now()
 }
 
-complaints.push(complaint)
+complaints.push(ticket)
 
 res.json({
 success:true,
@@ -58,17 +55,34 @@ reference:id
 })
 
 app.get("/api/complaints/:id",(req,res)=>{
+const ticket = complaints.find(c=>c.id===req.params.id)
+if(!ticket) return res.status(404).json({error:"not found"})
+res.json(ticket)
+})
 
-const complaint=complaints.find(c=>c.id===req.params.id)
+app.get("/api/admin/complaints",(req,res)=>{
+res.json(complaints)
+})
 
-if(!complaint){
-return res.json({error:"not found"})
+app.post("/api/admin/update",(req,res)=>{
+
+const {id,status,reply} = req.body
+
+const ticket = complaints.find(c=>c.id===id)
+
+if(!ticket){
+return res.status(404).json({error:"not found"})
 }
 
-res.json(complaint)
+if(status) ticket.status=status
+if(reply) ticket.reply=reply
+
+res.json({success:true,ticket})
 
 })
 
+const PORT = process.env.PORT || 10000
+
 app.listen(PORT,()=>{
-console.log("API running on port",PORT)
+console.log("API running on",PORT)
 })

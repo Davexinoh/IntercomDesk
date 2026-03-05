@@ -1,261 +1,177 @@
-const API = "https://intercomdesk-v2.onrender.com"
+const API="https://intercomdesk-v2.onrender.com/api"
 
-let stage = "start"
-let selectedCategory = null
-let selectedIssue = null
+let step="category"
+let ticketData={}
 
-const chat = document.getElementById("chat")
+const chatbox=document.getElementById("chatbox")
 
-function addBubble(text, type) {
-
-const msg = document.createElement("div")
-msg.className = "bubble " + type
-msg.innerText = text
-
-chat.appendChild(msg)
-chat.scrollTop = chat.scrollHeight
-
+function bot(msg){
+const div=document.createElement("div")
+div.className="message"
+div.innerText="Bot: "+msg
+chatbox.appendChild(div)
+chatbox.scrollTop=chatbox.scrollHeight
 }
 
-function bot(text) {
-addBubble(text, "bot")
+function user(msg){
+const div=document.createElement("div")
+div.className="message"
+div.innerText="You: "+msg
+chatbox.appendChild(div)
 }
 
-function user(text) {
-addBubble(text, "user")
-}
+async function sendMessage(){
 
-function typing() {
+const input=document.getElementById("userInput")
+const text=input.value
 
-const t = document.createElement("div")
-t.className = "typing"
-t.innerText = "Bot is typing..."
-
-chat.appendChild(t)
-chat.scrollTop = chat.scrollHeight
-
-setTimeout(() => t.remove(), 800)
-
-}
-
-window.onload = async () => {
-
-typing()
-
-setTimeout(async () => {
-
-bot("Hello 👋")
-bot("Welcome to IntercomDesk")
-
-bot("What issue are you having?")
-
-const res = await fetch(API + "/api/categories")
-window.categories = await res.json()
-
-categories.forEach(c => {
-bot("• " + c.name)
-})
-
-bot("You can also type: check <ticketID>")
-
-stage = "category"
-
-}, 900)
-
-}
-
-async function send() {
-
-const input = document.getElementById("input")
-
-const text = input.value.trim()
-
-if (!text) return
+if(!text)return
 
 user(text)
 
-input.value = ""
+input.value=""
 
-if (text.startsWith("check ")) {
+if(step==="category"){
 
-const id = text.split(" ")[1]
+const res=await fetch(API+"/categories")
+const cats=await res.json()
 
-typing()
+const found=cats.find(c=>c.name.toLowerCase()===text.toLowerCase())
 
-setTimeout(async () => {
-
-const res = await fetch(API + "/api/complaints/" + id)
-
-const data = await res.json()
-
-if (data.error) {
-
-bot("Ticket not found")
+if(!found){
+bot("Categories: "+cats.map(c=>c.name).join(", "))
 return
-
 }
 
-const time = new Date(data.createdAt).toLocaleString()
+ticketData.category=found.id
+step="issue"
 
-bot("Status: " + data.status)
-bot("Created: " + time)
-bot("Category: " + data.category)
-bot("Issue: " + data.subIssue)
+const res2=await fetch(API+"/categories/"+found.id)
+const issues=await res2.json()
 
-}, 900)
-
-return
-
-}
-
-if (stage === "category") {
-
-const match = categories.find(c =>
-c.name.toLowerCase().includes(text.toLowerCase())
-)
-
-if (!match) {
-
-bot("Please type one of the categories listed.")
-return
-
-}
-
-selectedCategory = match.id
-
-typing()
-
-setTimeout(async () => {
-
-bot("Fetching issue types...")
-
-const res = await fetch(API + "/api/categories/" + selectedCategory)
-
-window.issues = await res.json()
-
-issues.forEach(i => {
-bot("• " + i)
-})
-
-bot("Select issue type")
-
-stage = "issue"
-
-}, 800)
+bot("Issues: "+issues.join(", "))
 
 return
-
 }
 
-if (stage === "issue") {
+if(step==="issue"){
 
-selectedIssue = text
+ticketData.subIssue=text
+step="description"
 
-bot("Please describe the problem")
-
-stage = "description"
+bot("Describe your problem")
 
 return
-
 }
 
-if (stage === "description") {
+if(step==="description"){
 
-typing()
+ticketData.description=text
 
-setTimeout(async () => {
+const res=await fetch(API+"/complaints",{
 
-bot("Submitting complaint...")
+method:"POST",
 
-const res = await fetch(API + "/api/complaints", {
-
-method: "POST",
-
-headers: {
-"Content-Type": "application/json"
+headers:{
+"Content-Type":"application/json"
 },
 
-body: JSON.stringify({
-category: selectedCategory,
-subIssue: selectedIssue,
-description: text
-})
+body:JSON.stringify(ticketData)
 
 })
 
-const data = await res.json()
+const data=await res.json()
 
-bot("✅ Ticket created")
-bot("Reference ID: " + data.reference)
+bot("Ticket created. Reference: "+data.reference)
 
-bot("You can track it using:")
-bot("check " + data.reference)
-
-stage = "done"
-
-}, 900)
+step="category"
+ticketData={}
 
 }
 
 }
 
-function showAdmin() {
+function showAdmin(){
 
-document.getElementById("chat").style.display = "none"
-document.getElementById("inputArea").style.display = "none"
+document.getElementById("chatPage").style.display="none"
+document.getElementById("adminPage").style.display="block"
 
-const admin = document.getElementById("admin")
-
-admin.style.display = "flex"
-
-loadTickets()
+loadAdmin()
 
 }
 
-function showChat() {
+function showChat(){
 
-document.getElementById("chat").style.display = "flex"
-document.getElementById("inputArea").style.display = "flex"
-
-document.getElementById("admin").style.display = "none"
+document.getElementById("chatPage").style.display="block"
+document.getElementById("adminPage").style.display="none"
 
 }
 
-async function loadTickets() {
+async function loadAdmin(){
 
-const admin = document.getElementById("admin")
+const panel=document.getElementById("adminPanel")
 
-admin.innerHTML = "Loading tickets..."
+panel.innerHTML="Loading..."
 
-try {
+const res=await fetch(API+"/admin/complaints")
 
-const res = await fetch(API + "/api/admin")
+const data=await res.json()
 
-const tickets = await res.json()
+panel.innerHTML=""
 
-admin.innerHTML = ""
+data.forEach(ticket=>{
 
-tickets.forEach(t => {
+const div=document.createElement("div")
 
-const el = document.createElement("div")
+div.className="admin-ticket"
 
-el.className = "ticket"
+div.innerHTML=`
 
-el.innerHTML =
-"<b>" + t.id + "</b><br>" +
-t.category + " / " + t.subIssue + "<br>" +
-"Status: " + t.status
+<h3>${ticket.id}</h3>
 
-admin.appendChild(el)
+<p>Category: ${ticket.category}</p>
+<p>Issue: ${ticket.subIssue}</p>
+<p>Description: ${ticket.description}</p>
+
+<p>Status: ${ticket.status}</p>
+
+<select id="status-${ticket.id}">
+<option value="pending">Pending</option>
+<option value="investigating">Investigating</option>
+<option value="resolved">Resolved</option>
+</select>
+
+<input id="reply-${ticket.id}" placeholder="Reply"/>
+
+<button onclick="updateTicket('${ticket.id}')">Update</button>
+
+`
+
+panel.appendChild(div)
 
 })
 
 }
 
-catch {
+async function updateTicket(id){
 
-admin.innerHTML = "Admin API not available"
+const status=document.getElementById("status-"+id).value
+const reply=document.getElementById("reply-"+id).value
+
+await fetch(API+"/admin/update",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({id,status,reply})
+
+})
+
+loadAdmin()
 
 }
 
-  }
+bot("Hello. Type a category to begin.")

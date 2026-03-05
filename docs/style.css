@@ -1,47 +1,52 @@
 body{
-font-family:Arial;
-background:linear-gradient(135deg,#0f172a,#020617);
+background:#020617;
 color:white;
+font-family:Arial;
 margin:0;
 }
 
-.topbar{
+.navbar{
 display:flex;
 justify-content:space-between;
-align-items:center;
 padding:20px;
 background:linear-gradient(90deg,#6366f1,#22c55e);
 }
 
-.nav button{
+.menu button{
 margin-left:10px;
 padding:10px 20px;
 border:none;
-border-radius:10px;
+border-radius:8px;
 background:#6366f1;
 color:white;
-cursor:pointer;
 }
 
-.chatbox{
-height:400px;
+#chatbox{
+height:450px;
 overflow:auto;
 padding:20px;
 }
 
-.chatInput{
+.msg{
+background:#1e293b;
+padding:10px;
+border-radius:8px;
+margin-bottom:10px;
+}
+
+.inputArea{
 display:flex;
 padding:20px;
 }
 
-.chatInput input{
+.inputArea input{
 flex:1;
 padding:10px;
 border-radius:10px;
 border:none;
 }
 
-.chatInput button{
+.inputArea button{
 margin-left:10px;
 padding:10px 20px;
 border:none;
@@ -50,34 +55,17 @@ background:#6366f1;
 color:white;
 }
 
-.message{
-margin-bottom:15px;
-padding:10px;
-border-radius:10px;
-background:#1e293b;
-}
-
-.admin-ticket{
+.ticket{
 background:#1e293b;
 padding:20px;
-margin:20px;
-border-radius:12px;
+border-radius:10px;
+margin:15px;
 }
 
-.admin-ticket select,
-.admin-ticket input{
+.ticket select,
+.ticket input{
 margin-top:10px;
-padding:8px;
-border-radius:8px;
+padding:6px;
+border-radius:6px;
 border:none;
-}
-
-.admin-ticket button{
-margin-top:10px;
-padding:8px 16px;
-border:none;
-border-radius:8px;
-background:#6366f1;
-color:white;
-cursor:pointer;
 }

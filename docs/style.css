@@ -1,0 +1,83 @@
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#0f172a,#020617);
+color:white;
+margin:0;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px;
+background:linear-gradient(90deg,#6366f1,#22c55e);
+}
+
+.nav button{
+margin-left:10px;
+padding:10px 20px;
+border:none;
+border-radius:10px;
+background:#6366f1;
+color:white;
+cursor:pointer;
+}
+
+.chatbox{
+height:400px;
+overflow:auto;
+padding:20px;
+}
+
+.chatInput{
+display:flex;
+padding:20px;
+}
+
+.chatInput input{
+flex:1;
+padding:10px;
+border-radius:10px;
+border:none;
+}
+
+.chatInput button{
+margin-left:10px;
+padding:10px 20px;
+border:none;
+border-radius:10px;
+background:#6366f1;
+color:white;
+}
+
+.message{
+margin-bottom:15px;
+padding:10px;
+border-radius:10px;
+background:#1e293b;
+}
+
+.admin-ticket{
+background:#1e293b;
+padding:20px;
+margin:20px;
+border-radius:12px;
+}
+
+.admin-ticket select,
+.admin-ticket input{
+margin-top:10px;
+padding:8px;
+border-radius:8px;
+border:none;
+}
+
+.admin-ticket button{
+margin-top:10px;
+padding:8px 16px;
+border:none;
+border-radius:8px;
+background:#6366f1;
+color:white;
+cursor:pointer;
+}

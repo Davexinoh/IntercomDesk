@@ -1,215 +1,205 @@
-const API = "https://intercomdesk-v2.onrender.com/api";
+const API="https://intercomdesk-v2.onrender.com/api"
 
-let step = "category";
-let ticketData = {};
+const chat=document.getElementById("chatbox")
 
-const chatbox = document.getElementById("chatbox");
+let step="category"
 
-function addMessage(sender, text) {
-  const div = document.createElement("div");
-  div.className = "message";
-  div.innerHTML = `<b>${sender}:</b> ${text}`;
-  chatbox.appendChild(div);
-  chatbox.scrollTop = chatbox.scrollHeight;
+let data={}
+
+function msg(t){
+const d=document.createElement("div")
+d.className="msg"
+d.innerText=t
+chat.appendChild(d)
+chat.scrollTop=chat.scrollHeight
 }
 
-function bot(text) {
-  addMessage("Bot", text);
+async function start(){
+
+msg("Hello 👋 Welcome to IntercomDesk")
+
+msg("Select category:")
+
+const r=await fetch(API+"/categories")
+const cats=await r.json()
+
+cats.forEach(c=>msg(c.name))
+
 }
 
-function user(text) {
-  addMessage("You", text);
+async function send(){
+
+const input=document.getElementById("userInput")
+
+const text=input.value
+
+if(!text)return
+
+msg("You: "+text)
+
+input.value=""
+
+if(text.startsWith("check")){
+
+const id=text.split(" ")[1]
+
+const r=await fetch(API+"/complaints/"+id)
+
+if(r.status!==200){
+msg("Ticket not found")
+return
 }
 
-function showCategories(categories) {
-  const div = document.createElement("div");
+const t=await r.json()
 
-  categories.forEach(c => {
-    const btn = document.createElement("button");
-    btn.innerText = c.name;
-    btn.onclick = () => selectCategory(c);
-    btn.style.margin = "5px";
-    div.appendChild(btn);
-  });
+msg("Status: "+t.status)
 
-  chatbox.appendChild(div);
+if(t.reply) msg("Admin: "+t.reply)
+
+return
 }
 
-async function startConversation() {
+if(step==="category"){
 
-  bot("Hello 👋 Welcome to IntercomDesk.");
+data.category=text
 
-  bot("Please select a category:");
+step="issue"
 
-  const res = await fetch(API + "/categories");
-  const cats = await res.json();
+msg("Enter issue")
 
-  showCategories(cats);
+return
+
 }
 
-async function selectCategory(cat) {
+if(step==="issue"){
 
-  user(cat.name);
+data.subIssue=text
 
-  ticketData.category = cat.id;
+step="description"
 
-  step = "issue";
+msg("Describe problem")
 
-  const res = await fetch(API + "/categories/" + cat.id);
-  const issues = await res.json();
+return
 
-  bot("Select issue: " + issues.join(", "));
 }
 
-async function sendMessage() {
+if(step==="description"){
 
-  const input = document.getElementById("userInput");
+data.description=text
 
-  const text = input.value;
+const r=await fetch(API+"/complaints",{
 
-  if (!text) return;
+method:"POST",
 
-  user(text);
+headers:{
+"Content-Type":"application/json"
+},
 
-  input.value = "";
+body:JSON.stringify(data)
 
-  if (text.startsWith("check")) {
+})
 
-    const id = text.split(" ")[1];
+const res=await r.json()
 
-    const res = await fetch(API + "/complaints/" + id);
+msg("Ticket created")
 
-    if (res.status !== 200) {
-      bot("Ticket not found.");
-      return;
-    }
+msg("Reference: "+res.reference)
 
-    const data = await res.json();
+data={}
+step="category"
 
-    bot("Status: " + data.status);
-
-    if (data.reply) {
-      bot("Admin Reply: " + data.reply);
-    }
-
-    return;
-  }
-
-  if (step === "issue") {
-
-    ticketData.subIssue = text;
-
-    step = "description";
-
-    bot("Describe your problem");
-
-    return;
-  }
-
-  if (step === "description") {
-
-    ticketData.description = text;
-
-    const res = await fetch(API + "/complaints", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(ticketData)
-    });
-
-    const data = await res.json();
-
-    bot("✅ Ticket created.");
-
-    bot("Reference ID: " + data.reference);
-
-    bot("You can check status using:");
-    bot("check " + data.reference);
-
-    ticketData = {};
-    step = "category";
-
-    startConversation();
-  }
 }
 
-function showAdmin() {
-  document.getElementById("chatPage").style.display = "none";
-  document.getElementById("adminPage").style.display = "block";
-  loadAdmin();
 }
 
-function showChat() {
-  document.getElementById("chatPage").style.display = "block";
-  document.getElementById("adminPage").style.display = "none";
+function showAdmin(){
+
+document.getElementById("chatPage").style.display="none"
+
+document.getElementById("adminPage").style.display="block"
+
+loadAdmin()
+
 }
 
-async function loadAdmin() {
+function showChat(){
 
-  const panel = document.getElementById("adminPanel");
+document.getElementById("chatPage").style.display="block"
 
-  panel.innerHTML = "Loading...";
+document.getElementById("adminPage").style.display="none"
 
-  const res = await fetch(API + "/admin/complaints");
-
-  const data = await res.json();
-
-  panel.innerHTML = "";
-
-  data.forEach(ticket => {
-
-    const div = document.createElement("div");
-
-    div.className = "admin-ticket";
-
-    div.innerHTML = `
-      <h3>${ticket.id}</h3>
-
-      <p>Category: ${ticket.category}</p>
-      <p>Issue: ${ticket.subIssue}</p>
-      <p>Description: ${ticket.description}</p>
-
-      <p>Status: ${ticket.status}</p>
-
-      <select id="status-${ticket.id}">
-        <option value="pending">Pending</option>
-        <option value="investigating">Investigating</option>
-        <option value="resolved">Resolved</option>
-      </select>
-
-      <input id="reply-${ticket.id}" placeholder="Admin reply"/>
-
-      <button onclick="updateTicket('${ticket.id}')">
-        Update
-      </button>
-    `;
-
-    panel.appendChild(div);
-
-  });
 }
 
-async function updateTicket(id) {
+async function loadAdmin(){
 
-  const status = document.getElementById("status-" + id).value;
+const panel=document.getElementById("adminPanel")
 
-  const reply = document.getElementById("reply-" + id).value;
+const search=document.getElementById("search").value
 
-  await fetch(API + "/admin/update", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      id,
-      status,
-      reply
-    })
-  });
+const r=await fetch(API+"/admin/complaints")
 
-  loadAdmin();
+let data=await r.json()
+
+panel.innerHTML=""
+
+data.forEach(t=>{
+
+if(search && !t.id.includes(search)) return
+
+const d=document.createElement("div")
+
+d.className="ticket"
+
+d.innerHTML=`
+
+<h3>${t.id}</h3>
+
+<p>${t.category}</p>
+<p>${t.subIssue}</p>
+<p>${t.description}</p>
+
+<p>Status: ${t.status}</p>
+
+<select id="s-${t.id}">
+<option>pending</option>
+<option>investigating</option>
+<option>resolved</option>
+</select>
+
+<input id="r-${t.id}" placeholder="reply"/>
+
+<button onclick="update('${t.id}')">Update</button>
+
+`
+
+panel.appendChild(d)
+
+})
+
 }
 
-startConversation();
+async function update(id){
 
+const status=document.getElementById("s-"+id).value
+
+const reply=document.getElementById("r-"+id).value
+
+await fetch(API+"/admin/update",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({id,status,reply})
+
+})
+
+loadAdmin()
+
+}
+
+start()
+
+setInterval(loadAdmin,5000)
